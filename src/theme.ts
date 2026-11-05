@@ -26,38 +26,38 @@ export interface Theme {
 }
 
 export const LIGHT: Theme = {
-  bg:           "#f4f5f7",
-  bgAlt:        "#eaecf0",
+  bg:           "#eef0f3",
+  bgAlt:        "#e3e6eb",
   surface:      "#ffffff",
-  surfaceBorder:"#e2e5ea",
-  border:       "#d0d5dd",
-  text:         "#111827",
-  textMuted:    "#6b7280",
-  textFaint:    "#9ca3af",
-  primary:      "#1d6fa4",   // steel blue — readable on white
-  accent:       "#db2c18",   // strong red — today / current highlight
-  muted:        "#70a65b",
-  headerBg:     "rgba(244,245,247,0.92)",
-  chartGrid:    "#e5e7eb",
-  bgImportant:  "#db2c18",
+  surfaceBorder:"#d3d8df",
+  border:       "#b9c0ca",
+  text:         "#0b1220",
+  textMuted:    "#2a313b",
+  textFaint:    "#7a8391",
+  primary:      "#175f8f",   // steel blue — readable on white
+  accent:       "#e3170a",   // strong red — today / current highlight
+  muted:        "#4a8236",
+  headerBg:     "rgba(238,240,243,0.92)",
+  chartGrid:    "#dde1e7",
+  bgImportant:  "#e3170a",
   textImportant:  "#ffffff",
 };
 
 export const DARK: Theme = {
-  bg:           "#080c14",
-  bgAlt:        "#0d1420",
-  surface:      "#0d1420",
-  surfaceBorder:"#1a2540",
-  border:       "#1a2540",
-  text:         "#e2e8f0",
-  textMuted:    "#64748b",
-  textFaint:    "#374151",
+  bg:           "#060910",
+  bgAlt:        "#0f1726",
+  surface:      "#0f1726",
+  surfaceBorder:"#25334f",
+  border:       "#2c3b5a",
+  text:         "#eef2f7",
+  textMuted:    "#cbd3df",
+  textFaint:    "#5b6779",
   primary:      "#00d4ff",
-  accent:       "#ff6b35",
-  muted:        "#4a6fa5",
-  headerBg:     "rgba(8,12,20,0.85)",
-  chartGrid:    "#1a2540",
-  bgImportant:  "#ff6b35",
+  accent:       "#ff5f1f",
+  muted:        "#7096d1",
+  headerBg:     "rgba(6,9,16,0.85)",
+  chartGrid:    "#202c45",
+  bgImportant:  "#ff5f1f",
   textImportant:  "#ffffff",  
 };
 

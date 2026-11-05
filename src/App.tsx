@@ -57,8 +57,8 @@ function RefreshIndicator({
     : "—";
 
   // SVG ring params
-  const size = 28;
-  const stroke = 2.5;
+  const size = 16;
+  const stroke = 2;
   const r = (size - stroke) / 2;
   const circ = 2 * Math.PI * r;
   const dash = circ * progress;
@@ -70,7 +70,7 @@ function RefreshIndicator({
         alignItems: "center",
         gap: 8,
         marginLeft: 8,
-        padding: "3px 10px 3px 6px",
+        padding: "3px 10px 3px 8px",
         border: `1px solid ${t.border}`,
         borderRadius: 4,
         background: t.bgAlt,
@@ -104,18 +104,6 @@ function RefreshIndicator({
           strokeLinecap="round"
           style={isLoading ? { animation: "spin 1s linear infinite" } : { transition: "stroke-dasharray 0.8s linear" }}
         />
-
-        {/* Refresh icon — drawn as SVG path, centered, counter-rotated */}
-        <g transform={`rotate(90, ${size / 2}, ${size / 2}) translate(${size / 2}, ${size / 2})`}>
-          <path
-            d="M-3.5,0 A3.5,3.5 0 1,1 1.8,3 M1.8,3 L0,5 M1.8,3 L3.8,1.5"
-            fill="none"
-            stroke={isLoading ? t.accent : t.textMuted}
-            strokeWidth={1.4}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </g>
       </svg>
 
       {/* Text info */}
@@ -176,7 +164,8 @@ function AppInner() {
           backdropFilter: "blur(8px)",
           position: "sticky",
           top: 0,
-          zIndex: 10,
+          // Must stay above hovered chart cards (.hourly-card:hover uses z-index 100)
+          zIndex: 1000,
           background: t.headerBg,
         }}>
           {/* Brand */}
@@ -185,15 +174,25 @@ function AppInner() {
               width: 8, height: 8, borderRadius: "50%",
               background: t.accent, animation: "blink 2s infinite",
             }} />
-            <span style={{
-              fontFamily: FONTS.display,
-              fontSize: 13,
-              fontWeight: 700,
-              color: t.text,
-              letterSpacing: "0.06em",
-            }}>
-              SBS STATISTICS
-            </span>
+            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <span style={{
+                fontFamily: FONTS.display,
+                fontSize: 13,
+                fontWeight: 700,
+                color: t.text,
+                letterSpacing: "0.06em",
+                lineHeight: 1.1,
+              }}>
+                SBS STATISTICS
+              </span>
+              <span style={{ fontFamily: FONTS.mono, fontSize: 10, color: t.textMuted, lineHeight: 1.1 }}>
+                Data source:{" "}
+                <a href="https://sbs-group.army" target="_blank" rel="noopener noreferrer"
+                  style={{ color: t.primary, textDecoration: "none" }}>
+                  sbs-group.army
+                </a>
+              </span>
+            </div>
           </div>
 
           {/* Nav + refresh indicator + theme toggle */}
@@ -202,7 +201,7 @@ function AppInner() {
             {navBtn("daily", "DAILY")}
             {navBtn("monthly", "MONTHLY")}
             {navBtn("subdivisions", "SUBDIVISIONS")}
-            {navBtn("top10", "TOP10")}
+            {navBtn("top10", "RECORDS")}
 
             {/* Refresh indicator */}
             <RefreshIndicator

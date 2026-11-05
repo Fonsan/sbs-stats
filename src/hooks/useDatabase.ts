@@ -417,8 +417,8 @@ export function useDatabase() {
     [db]
   );
 
-  // ── Top10: 10 highest daily values (latest hour per date) per stat key ───────
-  const queryTop10 = useCallback((): Record<StatKey, DailyDataPoint[]> => {
+  // ── Top10: N highest daily values (latest hour per date) per stat key ────────
+  const queryTop10 = useCallback((limit: number = 10): Record<StatKey, DailyDataPoint[]> => {
     if (!db) return {} as Record<StatKey, DailyDataPoint[]>;
 
     const availableCols = getTableColumns(db, "daily_stats");
@@ -446,7 +446,7 @@ export function useDatabase() {
           ON d.date = l.date AND d.hour = l.hour
         WHERE COALESCE(d.${key}, 0) > 0
         ORDER BY value DESC, d.date DESC
-        LIMIT 10
+        LIMIT ${Math.max(1, Math.floor(limit))}
       `;
 
       result[key] = queryRows<DailyDataPoint>(db, sql).map((row) => ({

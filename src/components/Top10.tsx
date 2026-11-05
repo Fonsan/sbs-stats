@@ -55,17 +55,24 @@ export function Top10({ title, data, wfull }: Props) {
           </thead>
           <tbody>
             {data.map((d, i) => {
-              const valueColor = d.is_today ? t.accent : i === 0 ? t.primary : t.text;
+              // Today's row is highlighted by background so its rank stands out at a glance
+              const rowCell = d.is_today
+                ? { ...cell, background: t.accent + "2e", borderBottom: `1px solid ${t.accent}66` }
+                : cell;
               return (
                 <tr key={d.date}>
-                  <td style={{ ...cell, color: t.textMuted }}>{i + 1}</td>
-                  <td style={{ ...cell, color: d.is_today ? t.accent : t.text }}>
+                  <td style={{ ...rowCell, color: d.is_today ? t.text : t.textMuted, fontWeight: d.is_today ? 700 : 400, borderLeft: d.is_today ? `3px solid ${t.accent}` : undefined }}>{i + 1}</td>
+                  <td style={{ ...rowCell, color: t.text }}>
                     {formatDate(d.date)}
                     {d.is_today && (
-                      <span style={{ marginLeft: 8, fontSize: 10, color: t.accent }}>today</span>
+                      <span style={{
+                        marginLeft: 8, padding: "1px 6px", borderRadius: 3,
+                        fontSize: 10, fontWeight: 700, letterSpacing: "0.05em",
+                        background: t.accent, color: "#ffffff",
+                      }}>TODAY</span>
                     )}
                   </td>
-                  <td style={{ ...cell, textAlign: "right", color: valueColor, fontWeight: i === 0 ? 700 : 400 }}>
+                  <td style={{ ...rowCell, textAlign: "right", color: i === 0 ? t.primary : t.text, fontWeight: i === 0 || d.is_today ? 700 : 400 }}>
                     {d.value.toLocaleString()}
                   </td>
                 </tr>

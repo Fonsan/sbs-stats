@@ -48,58 +48,55 @@ const CustomTooltip = ({
     .filter((p) => typeof p.dataKey === "string" && typeof p.value === "number")
     .map((p) => ({ dataKey: p.dataKey as string, value: p.value as number }));
 
-  // Today first, then rest sorted newest→oldest
-  const sorted = [...entries].sort((a, b) => {
-    if (a.dataKey === todayDate) return -1;
-    if (b.dataKey === todayDate) return 1;
-    return b.dataKey.localeCompare(a.dataKey);
-  });
-  // Split into columns of max 10 rows each
-  const ROWS_PER_COL = 10;
-  const columns: typeof sorted[] = [];
-  for (let i = 0; i < sorted.length; i += ROWS_PER_COL) {
-    columns.push(sorted.slice(i, i + ROWS_PER_COL));
+  // Today goes into the header line, so the past days fill whole columns (e.g. 60 days → 5 × 12)
+  const today = entries.find((p) => p.dataKey === todayDate);
+  const past = entries
+    .filter((p) => p.dataKey !== todayDate)
+    .sort((a, b) => b.dataKey.localeCompare(a.dataKey)); // newest → oldest
+  const ROWS_PER_COL = 12;
+  const columns: typeof past[] = [];
+  for (let i = 0; i < past.length; i += ROWS_PER_COL) {
+    columns.push(past.slice(i, i + ROWS_PER_COL));
   }
   return (
     <div style={{
       background: t.surface,
       border: `1px solid ${t.border}`,
       borderRadius: 6,
-      padding: "8px 10px",
+      padding: "6px 8px",
       fontFamily: FONTS.mono,
       fontSize: 10,
       boxShadow: "0 4px 20px rgba(0,0,0,0.22)",
       pointerEvents: "none",
-      position: "relative",
-      zIndex: 9999,
     }}>
-      {/* Hour header */}
-      <div style={{ color: t.textMuted, marginBottom: 5, fontSize: 10, fontWeight: 700, letterSpacing: "0.05em" }}>
-        {label == null ? "" : label === 0 ? "00:00" : `${String(label - 1).padStart(2,"0")}:00–${String(label - 1).padStart(2,"0")}:59`}
+      {/* Hour header + today's value */}
+      <div style={{ display: "flex", gap: 12, marginBottom: 4, fontWeight: 700, letterSpacing: "0.05em" }}>
+        <span style={{ color: t.textMuted }}>
+          {label == null ? "" : label === 0 ? "00:00" : `${String(label - 1).padStart(2,"0")}:00–${String(label - 1).padStart(2,"0")}:59`}
+        </span>
+        {today && (
+          <span style={{ color: t.accent }}>
+            TODAY <span style={{ color: t.text }}>{today.value.toLocaleString()}</span>
+          </span>
+        )}
       </div>
       {/* Columns */}
-      <div style={{ display: "flex", gap: 12 }}>
+      <div style={{ display: "flex", gap: 8 }}>
         {columns.map((col, ci) => (
-          <div key={ci}>
+          <div key={ci} style={ci > 0 ? { borderLeft: `1px solid ${t.surfaceBorder}`, paddingLeft: 8 } : undefined}>
             {col.map((p) => {
-              const isToday = p.dataKey === todayDate;
-              // Show MM-DD for past days to save space
-              const [y, m, d] = p.dataKey.split('-');
-              const label = isToday ? "TODAY" : `${d}.${m}.`;
+              // DD.MM. to save space
+              const [, m, d] = p.dataKey.split('-');
               return (
                 <div key={p.dataKey} style={{
                   display: "flex",
                   justifyContent: "space-between",
-                  gap: 8,
-                  marginBottom: 2,
-                  color: isToday ? t.accent : t.textMuted,
-                  fontWeight: isToday ? 700 : 400,
-                  lineHeight: "15px",
+                  gap: 6,
+                  lineHeight: "14px",
                 }}>
-                  <span>{label}</span>
-                  <span style={{ color: t.text, fontWeight: isToday ? 700 : 400 }}>
-                    {p.value?.toLocaleString() ?? "—"}
-                  </span>
+                  {/* Dates faint, values bold, so the two read as separate columns */}
+                  <span style={{ color: t.textFaint }}>{`${d}.${m}.`}</span>
+                  <span style={{ color: t.text, fontWeight: 700 }}>{p.value.toLocaleString()}</span>
                 </div>
               );
             })}
@@ -158,8 +155,9 @@ export function HourlyLineChart({ title, data, globalMax, globalMedian, wfull }:
           <YAxis tick={{ fontSize: 10, fill: t.textMuted, fontFamily: FONTS.mono }} tickLine={false} axisLine={false} domain={[0, (dataMax: number) => Math.max(dataMax, globalMax)]} />
           <Tooltip
             content={(props) => <CustomTooltip {...props} todayDate={todaySeries?.date} t={t} />}
-            allowEscapeViewBox={{ x: true, y: true }}
-            wrapperStyle={{ zIndex: 9999, position: "absolute" }}
+            // Keep the tooltip inside the chart so it flips sides instead of leaving the screen
+            allowEscapeViewBox={{ x: false, y: false }}
+            wrapperStyle={{ zIndex: 9999 }}
           />
           <ReferenceLine y={globalMax} stroke={t.accent} strokeDasharray="4 4" strokeOpacity={0.6}
             label={{ value: "MAX", position: "insideTopRight", fontSize: 9, fill: t.accent, fontFamily: FONTS.mono }} />
