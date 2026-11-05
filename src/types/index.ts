@@ -8,7 +8,7 @@ export const TARGET_LABELS: Record<TargetId, string> = {
   3: "Guns, howitzers",
   4: "Self-propelled artillery",
   5: "MLRS (was MLRS, SAMs, AA Guns before around March 20)",
-  7: "Light, Heavy, Special-purpose vehicles",
+  7: "Logistics, Engr. & special vehicles, refuelers etc.",
   18: "Motorcycles and military buggies",
   21: "Shelters",
   22: "Dugouts",
@@ -21,8 +21,8 @@ export const TARGET_LABELS: Record<TargetId, string> = {
   20: "Ammo, fuel and equipment depots",
   13: "Antennas",
   17: "Tactical infrastructure",
-  24: "Enemy copter drones",
-  26: "Enemy unmanned robotic complexes",
+  24: "Enemy multirotor drones",
+  26: "Enemy UGVs",
 	29: "Helicopter",
 	41: "Aircraft"
 };

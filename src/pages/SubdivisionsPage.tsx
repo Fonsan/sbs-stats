@@ -184,8 +184,8 @@ export function SubdivisionsPage({ refreshKey }: SubdivisionsPageProps) {
                   <RatioBarChart
                     title="Killed vs Wounded"
                     data={ratioData}
-                    tickFormatter={(v: string) => v.replace("-", "/")}
-                    labelFormatter={(v: string) => v}
+                    tickFormatter={(v: string) => v.slice(0, 7).replace("-", "/")}
+                    labelFormatter={(v: string) => v.slice(0, 7).replace("-", "/")}
                     wfull
                   />
                 )}
