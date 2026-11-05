@@ -1,10 +1,12 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, Fragment } from "react";
 import { useDatabaseContext } from "@/context/useDatabaseContext";
 import { useTheme } from "@/hooks/useTheme";
 // import { DailyLineChart } from "@/components/DailyLineChart";
 import { DailyBarChart } from "@/components/DailyBarChart";
+import { RatioBarChart, type RatioDataPoint } from "@/components/RatioBarChart";
 import { ChartGrid, LoadingScreen, ErrorScreen } from "@/components/Layout";
 import { buildMetrics } from "@/utils/metrics";
+import { killedShare } from "@/utils/ratio";
 import type { DailyRow, DailyDataPoint, GlobalStats, StatKey, Metric } from "@/types";
 import { FONTS } from "@/theme";
 
@@ -35,6 +37,14 @@ export function DailyPage({ refreshKey }: DailyPageProps) {
 
   const makeDataset = (key: StatKey): DailyDataPoint[] =>
     rows.map((d) => ({ date: d.date, value: (d[key] as number) ?? 0, is_today: d.is_today }));
+
+  const ratioData: RatioDataPoint[] = rows.map((d) => ({
+    date: d.date,
+    ratio: killedShare(d.personnel_killed ?? 0, d.personnel_wounded ?? 0),
+    killed: d.personnel_killed ?? 0,
+    wounded: d.personnel_wounded ?? 0,
+    highlight: d.is_today,
+  }));
 
   return (
     <div>
@@ -67,14 +77,24 @@ export function DailyPage({ refreshKey }: DailyPageProps) {
       {(loadState === "ready" || hasData) && (
         <ChartGrid>
           {metrics.map((m: Metric) => (
-            <DailyBarChart
-              key={m.key}
-              title={m.label}
-              data={makeDataset(m.key)}
-              globalMax={globalStats[m.key]?.max ?? 0}
-              globalMedian={globalStats[m.key]?.median ?? 0}
-              wfull={m.wfull ?? false}
-            />
+            <Fragment key={m.key}>
+              <DailyBarChart
+                title={m.label}
+                data={makeDataset(m.key)}
+                globalMax={globalStats[m.key]?.max ?? 0}
+                globalMedian={globalStats[m.key]?.median ?? 0}
+                wfull={m.wfull ?? false}
+              />
+              {m.key === "total_personnel_casualties" && (
+                <RatioBarChart
+                  title="Killed vs Wounded"
+                  data={ratioData}
+                  tickFormatter={(v: string) => { const p = v.slice(5).split('-'); return `${p[1]}/${p[0]}`; }}
+                  labelFormatter={(v: string) => { const [y, m, d] = v.split('-'); return `${d}.${m}.${y}`; }}
+                  wfull
+                />
+              )}
+            </Fragment>
             // <DailyLineChart
             //   key={m.key}
             //   title={m.label}

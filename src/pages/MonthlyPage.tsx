@@ -1,9 +1,11 @@
-import { useMemo, useEffect, useState } from "react";
+import { useMemo, useEffect, useState, Fragment } from "react";
 import { useDatabaseContext } from "@/context/useDatabaseContext";
 import { useTheme } from "@/hooks/useTheme";
 import { MonthlyBarChart } from "@/components/MonthlyBarChart";
+import { RatioBarChart, type RatioDataPoint } from "@/components/RatioBarChart";
 import { ChartGrid, LoadingScreen, ErrorScreen } from "@/components/Layout";
 import { buildMetrics } from "@/utils/metrics";
+import { killedShare } from "@/utils/ratio";
 import type { MonthlyDataPoint, MonthlyRow, StatKey, Metric } from "@/types";
 import { FONTS } from "@/theme";
 
@@ -36,6 +38,15 @@ export function MonthlyPage({ refreshKey }: MonthlyPageProps) {
       };
     });
 
+  // Current month uses completed days only (see queryMonthly)
+  const ratioData: RatioDataPoint[] = rows.map((d: MonthlyRow) => ({
+    date: d.date,
+    ratio: killedShare(d.personnel_killed ?? 0, d.personnel_wounded ?? 0),
+    killed: d.personnel_killed ?? 0,
+    wounded: d.personnel_wounded ?? 0,
+    highlight: d.is_current_month,
+  })).reverse();
+
   return (
     <div>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28, flexWrap: "wrap", gap: 12 }}>
@@ -62,12 +73,22 @@ export function MonthlyPage({ refreshKey }: MonthlyPageProps) {
       {(loadState === "ready" || hasData) && (
         <ChartGrid>
           {metrics.map((m: Metric) => (
-            <MonthlyBarChart
-              key={m.key}
-              title={m.label}
-              data={makeDataset(m.key).reverse()}
-              wfull={m.wfull ?? false}
-            />
+            <Fragment key={m.key}>
+              <MonthlyBarChart
+                title={m.label}
+                data={makeDataset(m.key).reverse()}
+                wfull={m.wfull ?? false}
+              />
+              {m.key === "total_personnel_casualties" && (
+                <RatioBarChart
+                  title="Killed vs Wounded"
+                  data={ratioData}
+                  tickFormatter={(v: string) => v.replace("-", "/")}
+                  labelFormatter={(v: string) => v}
+                  wfull
+                />
+              )}
+            </Fragment>
           ))}
         </ChartGrid>
       )}
