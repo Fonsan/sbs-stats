@@ -3,6 +3,7 @@ import {
   Tooltip, ReferenceLine, ResponsiveContainer, Cell, LabelList,
 } from "recharts";
 import { useTheme } from "@/hooks/useTheme";
+import { ChartCard } from "@/components/ChartCard";
 import { weightedKilledShare } from "@/utils/ratio";
 import { FONTS } from "@/theme";
 
@@ -20,6 +21,7 @@ interface Props {
   tickFormatter: (v: string) => string;
   labelFormatter: (v: string) => string;
   wfull: boolean;
+  exportContext?: string; // shown in the PNG export only
 }
 
 // Stacked shares: killed at the bottom, wounded on top, always summing to 100
@@ -62,7 +64,7 @@ const RatioTooltip = ({
   );
 };
 
-export function RatioBarChart({ title, data, tickFormatter, labelFormatter, wfull }: Props) {
+export function RatioBarChart({ title, data, tickFormatter, labelFormatter, wfull, exportContext }: Props) {
   const { theme: t } = useTheme();
   const avg = weightedKilledShare(data);
   const stacked: StackedPoint[] = data.map((d) => ({
@@ -75,18 +77,7 @@ export function RatioBarChart({ title, data, tickFormatter, labelFormatter, wful
   const pctLabel = (v: unknown) => (typeof v === "number" && v >= 8 ? `${Math.round(v)}%` : "");
 
   return (
-    <div style={{
-      background: t.surface,
-      border: `1px solid ${t.surfaceBorder}`,
-      borderRadius: 8,
-      padding: "18px 16px 12px",
-      gridColumn: wfull ? "1 / -1" : undefined,
-      animation: "fadeIn 0.3s ease both",
-      boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
-    }}>
-      <div style={{ fontFamily: FONTS.display, fontWeight: 700, fontSize: 12, color: t.textMuted, letterSpacing: "0.07em", textTransform: "uppercase", marginBottom: 4 }}>
-        {title}
-      </div>
+    <ChartCard title={title} wfull={wfull} exportContext={exportContext}>
       <div style={{ display: "flex", gap: 16, marginBottom: 10, fontFamily: FONTS.mono, fontSize: 11, flexWrap: "wrap" }}>
         <span style={{ color: t.accent }}>■ Killed</span>
         <span style={{ color: t.primary }}>■ Wounded</span>
@@ -117,11 +108,10 @@ export function RatioBarChart({ title, data, tickFormatter, labelFormatter, wful
             {showLabels && <LabelList dataKey="woundedPct" position="center" formatter={pctLabel} style={labelStyle} />}
           </Bar>
           {avg != null && (
-            <ReferenceLine y={avg} stroke={t.text} strokeDasharray="4 4" strokeOpacity={0.7}
-              label={{ value: "AVG", position: "insideTopRight", fontSize: 9, fill: t.text, fontFamily: FONTS.mono }} />
+            <ReferenceLine y={avg} stroke={t.text} strokeDasharray="4 4" strokeOpacity={0.7} />
           )}
         </BarChart>
       </ResponsiveContainer>
-    </div>
+    </ChartCard>
   );
 }

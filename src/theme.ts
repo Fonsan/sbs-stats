@@ -74,6 +74,20 @@ export const GLOBAL_CSS = (t: Theme) => `
   ::-webkit-scrollbar { width: 6px; }
   ::-webkit-scrollbar-track { background: ${t.bgAlt}; }
   ::-webkit-scrollbar-thumb { background: ${t.border}; border-radius: 3px; }
-  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.25} }
+  /* Hover feedback for all buttons; uses properties the inline button styles don't set.
+     The inset shadow tints the background (inline background can't be overridden by CSS). */
+  button:not(:disabled):hover, .app-refresh:hover {
+    box-shadow: 0 0 0 1px ${t.primary}, inset 0 0 0 100px ${t.primary}2e;
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+  }
+  button:not(:disabled):active, .app-refresh:active { transform: translateY(0); filter: brightness(0.95); }
+  button:focus-visible { outline: 2px solid ${t.primary}; outline-offset: 2px; }
+  /* Chart PNG export: caption/context only visible while a card is being captured;
+     the fade-in animation is switched off so the capture isn't taken mid-fade */
+  .chart-export-only { display: none; }
+  .exporting span.chart-export-only { display: inline; }
+  .exporting div.chart-export-only { display: block; }
+  .exporting { animation: none !important; }  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.25} }
   @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
 `;

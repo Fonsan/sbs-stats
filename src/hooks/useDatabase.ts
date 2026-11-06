@@ -92,6 +92,16 @@ function buildStatColumns(availableCols: string[]): string {
     .join(", ");
 }
 
+// Newest data_collected_at in daily_stats, or null if the column is missing/empty
+function queryDataCollectedAt(db: Database): Date | null {
+  if (!getTableColumns(db, "daily_stats").includes("data_collected_at")) return null;
+  const rows = queryRows<{ ts: string | null }>(db, "SELECT MAX(data_collected_at) AS ts FROM daily_stats");
+  const ts = rows[0]?.ts;
+  if (!ts) return null;
+  const d = new Date(ts);
+  return isNaN(d.getTime()) ? null : d;
+}
+
 export const REFRESH_INTERVAL_MS = 5 * 60 * 1000; // 10 minutes
 
 export function useDatabase() {
@@ -99,6 +109,8 @@ export function useDatabase() {
   const [loadState, setLoadState] = useState<LoadState>("idle");
   const [error, setError] = useState<string | null>(null);
   const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
+  // Time the displayed data was collected at the source (newest daily_stats snapshot)
+  const [dataCollectedAt, setDataCollectedAt] = useState<Date | null>(null);
   const [refreshCount, setRefreshCount] = useState(0);
 
   const doLoad = useCallback(() => {
@@ -108,6 +120,7 @@ export function useDatabase() {
         setDb(database);
         setLoadState("ready");
         setLastRefreshed(new Date());
+        setDataCollectedAt(queryDataCollectedAt(database));
       })
       .catch((err: unknown) => {
         setError(err instanceof Error ? err.message : String(err));
@@ -215,9 +228,11 @@ export function useDatabase() {
       ...TARGET_IDS.flatMap((id) => [`hit_${id}` as StatKey, `destroyed_${id}` as StatKey]),
     ];
 
-    // Fetch latest-hour row per date for all time (same logic as queryDaily but no date filter)
+    // Fetch latest-hour row per date for all time (same logic as queryDaily but no date filter).
+    // NULLs are kept: a category the source didn't report yet (e.g. flights before Oct 2026)
+    // must not count as a day with 0, or it drags the median down to 0.
     const statCols = allStatKeys
-      .map((col) => availableCols.includes(col) ? `COALESCE(${col}, 0) AS ${col}` : `0 AS ${col}`)
+      .map((col) => availableCols.includes(col) ? col : `NULL AS ${col}`)
       .join(", ");
 
     const sql = `
@@ -228,15 +243,19 @@ export function useDatabase() {
 
     // Deduplicate to latest hour per date
     const seen = new Set<string>();
-    const rows: Record<string, number>[] = [];
-    for (const row of queryRows<Record<string, number>>(db, sql)) {
+    const rows: Record<string, number | null>[] = [];
+    for (const row of queryRows<Record<string, number | null>>(db, sql)) {
       const d = String(row["date"]);
       if (!seen.has(d)) { seen.add(d); rows.push(row); }
     }
 
     const result = {} as Record<StatKey, { max: number; median: number }>;
     for (const key of allStatKeys) {
-      const vals = rows.map((r) => (r[key] as number) ?? 0).sort((a, b) => a - b);
+      // Only days where this category was reported; real zeros still count
+      const vals = rows
+        .map((r) => r[key])
+        .filter((v): v is number => typeof v === "number")
+        .sort((a, b) => a - b);
       result[key] = {
         max: vals.length ? Math.max(...vals) : 0,
         median: vals.length ? vals[Math.floor(vals.length / 2)] : 0,
@@ -461,6 +480,6 @@ export function useDatabase() {
     loadState, error,
     queryDaily, queryHourly, queryMonthly, queryGlobalStats, queryTop10,
     querySubdivisions, querySubdivisionMonthly, querySubdivisionMonths, querySubdivisionRanking,
-    refresh, lastRefreshed, refreshCount,
+    refresh, lastRefreshed, refreshCount, dataCollectedAt,
   };
 }

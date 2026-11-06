@@ -39,7 +39,7 @@ export function Top10Page({ refreshKey }: Top10PageProps) {
           </p>
           <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: t.bgImportant, marginTop: 3 }}>Today's figures are preliminary and will be updated over the course of the next day.</p>
         </div>
-        <div style={{ display: "flex", gap: 6 }}>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
           {LIMIT_OPTIONS.map((n) => (
             <button key={n} onClick={() => setLimit(n)} style={{
               background: limit === n ? t.primary : t.bgAlt,

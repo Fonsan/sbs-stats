@@ -4,6 +4,7 @@ import {
 } from "recharts";
 import type { DailyDataPoint } from "@/types";
 import { useTheme } from "@/hooks/useTheme";
+import { ChartCard } from "@/components/ChartCard";
 import { FONTS } from "@/theme";
 
 interface Props {
@@ -12,29 +13,19 @@ interface Props {
   globalMax: number;
   globalMedian: number;
   wfull: boolean;
+  exportContext?: string; // shown in the PNG export only
 }
 
-export function DailyBarChart({ title, data, globalMax, globalMedian, wfull }: Props) {
+export function DailyBarChart({ title, data, globalMax, globalMedian, wfull, exportContext }: Props) {
   const { theme: t } = useTheme();
   const max = globalMax;
   const median = globalMedian;
 
   return (
-    <div style={{
-      background: t.surface,
-      border: `1px solid ${t.surfaceBorder}`,
-      borderRadius: 8,
-      padding: "18px 16px 12px",
-      gridColumn: wfull ? "1 / -1" : undefined,
-      animation: "fadeIn 0.3s ease both",
-      boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
-    }}>
-      <div style={{ fontFamily: FONTS.display, fontWeight: 700, fontSize: 12, color: t.textMuted, letterSpacing: "0.07em", textTransform: "uppercase", marginBottom: 4 }}>
-        {title}
-      </div>
+    <ChartCard title={title} wfull={wfull} exportContext={exportContext}>
       <div style={{ display: "flex", gap: 16, marginBottom: 10, fontFamily: FONTS.mono, fontSize: 11 }}>
         <span style={{ color: t.accent }}>▲ MAX {max.toLocaleString()}</span>
-        <span style={{ color: t.muted }}>~ MED {median.toLocaleString()}</span>
+        <span style={{ color: t.text }}>~ MEDIAN {median.toLocaleString()}</span>
       </div>
       <ResponsiveContainer width="100%" height={220}>
         <BarChart data={data} margin={{ top: 8, right: 8, left: -10, bottom: 0 }}>
@@ -52,17 +43,16 @@ export function DailyBarChart({ title, data, globalMax, globalMedian, wfull }: P
             itemStyle={{ color: t.primary }}
             labelFormatter={(v: string) => { const [y, m, d] = v.split('-'); return `${d}.${m}.${y}`; }}
           />
-          <ReferenceLine y={max} stroke={t.accent} strokeDasharray="4 4" strokeOpacity={0.6}
-            label={{ value: "MAX", position: "insideTopRight", fontSize: 9, fill: t.accent, fontFamily: FONTS.mono }} />
-          <ReferenceLine y={median} stroke={t.muted} strokeDasharray="4 4" strokeOpacity={0.5}
-            label={{ value: "MED", position: "insideTopRight", fontSize: 9, fill: t.muted, fontFamily: FONTS.mono }} />
           <Bar dataKey="value" name={title}>
             {data.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={entry.is_today ? t.accent : t.primary} />
             ))}
           </Bar>
+          {/* Reference lines after the bars so they're drawn on top */}
+          <ReferenceLine y={max} stroke={t.accent} strokeDasharray="4 4" strokeOpacity={0.6} />
+          <ReferenceLine y={median} stroke={t.text} strokeDasharray="4 4" strokeOpacity={0.7} />
         </BarChart>
       </ResponsiveContainer>
-    </div>
+    </ChartCard>
   );
 }

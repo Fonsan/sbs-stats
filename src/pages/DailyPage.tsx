@@ -54,11 +54,11 @@ export function DailyPage({ refreshKey }: DailyPageProps) {
             Daily Statistics
           </h1>
           <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: t.textMuted, marginTop: 3 }}>
-            Latest reported value per day · MAX/MED based on all data · {new Date().toDateString()}
+            Latest reported value per day · MAX/MEDIAN based on all days with data · {new Date().toDateString()}
           </p>
            <p style={{ fontFamily: FONTS.mono, fontSize: 11, color: t.bgImportant, marginTop: 3}}>Today's figures are preliminary and will be updated over the course of the next day.</p>
         </div>
-        <div style={{ display: "flex", gap: 6 }}>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
           {DAY_OPTIONS.map((d) => (
             <button key={d} onClick={() => setDays(d)} style={{
               background: days === d ? t.primary : t.bgAlt,

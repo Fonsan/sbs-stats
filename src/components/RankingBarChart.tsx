@@ -3,6 +3,7 @@ import {
   Tooltip, ResponsiveContainer, LabelList,
 } from "recharts";
 import { useTheme } from "@/hooks/useTheme";
+import { ChartCard } from "@/components/ChartCard";
 import { FONTS } from "@/theme";
 
 export interface RankingDataPoint {
@@ -14,6 +15,7 @@ interface Props {
   title: string;
   data: RankingDataPoint[]; // already sorted, highest first
   wfull: boolean;
+  exportContext?: string; // shown in the PNG export only
 }
 
 const BAR_SIZE = 16;
@@ -43,7 +45,7 @@ const RankingTooltip = ({
   );
 };
 
-export function RankingBarChart({ title, data, wfull }: Props) {
+export function RankingBarChart({ title, data, wfull, exportContext }: Props) {
   const { theme: t } = useTheme();
 
   // Size the category axis to the longest label (mono font ≈ 6.5px per char at 10px)
@@ -51,18 +53,7 @@ export function RankingBarChart({ title, data, wfull }: Props) {
   const height = Math.max(80, data.length * ROW_HEIGHT + 24);
 
   return (
-    <div style={{
-      background: t.surface,
-      border: `1px solid ${t.surfaceBorder}`,
-      borderRadius: 8,
-      padding: "18px 16px 12px",
-      gridColumn: wfull ? "1 / -1" : undefined,
-      animation: "fadeIn 0.3s ease both",
-      boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
-    }}>
-      <div style={{ fontFamily: FONTS.display, fontWeight: 700, fontSize: 12, color: t.textMuted, letterSpacing: "0.07em", textTransform: "uppercase", marginBottom: 14 }}>
-        {title}
-      </div>
+    <ChartCard title={title} wfull={wfull} titleGap={14} exportContext={exportContext}>
       {data.length === 0 ? (
         <div style={{ fontFamily: FONTS.mono, fontSize: 11, color: t.textMuted, padding: "24px 0", textAlign: "center" }}>
           No data
@@ -89,6 +80,6 @@ export function RankingBarChart({ title, data, wfull }: Props) {
           </BarChart>
         </ResponsiveContainer>
       )}
-    </div>
+    </ChartCard>
   );
 }

@@ -1,16 +1,18 @@
 import type { DailyDataPoint } from "@/types";
 import { useTheme } from "@/hooks/useTheme";
+import { ChartCard } from "@/components/ChartCard";
 import { FONTS } from "@/theme";
 
 interface Props {
   title: string;
   data: DailyDataPoint[];
   wfull: boolean;
+  exportContext?: string; // shown in the PNG export only
 }
 
 const formatDate = (v: string) => { const [y, m, d] = v.split("-"); return `${d}.${m}.${y}`; };
 
-export function Top10({ title, data, wfull }: Props) {
+export function Top10({ title, data, wfull, exportContext }: Props) {
   const { theme: t } = useTheme();
 
   const cell = {
@@ -28,18 +30,7 @@ export function Top10({ title, data, wfull }: Props) {
   };
 
   return (
-    <div style={{
-      background: t.surface,
-      border: `1px solid ${t.surfaceBorder}`,
-      borderRadius: 8,
-      padding: "18px 16px 12px",
-      gridColumn: wfull ? "1 / -1" : undefined,
-      animation: "fadeIn 0.3s ease both",
-      boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
-    }}>
-      <div style={{ fontFamily: FONTS.display, fontWeight: 700, fontSize: 12, color: t.textMuted, letterSpacing: "0.07em", textTransform: "uppercase", marginBottom: 14 }}>
-        {title}
-      </div>
+    <ChartCard title={title} wfull={wfull} titleGap={14} exportContext={exportContext}>
       {data.length === 0 ? (
         <div style={{ fontFamily: FONTS.mono, fontSize: 12, color: t.textMuted, padding: "12px 8px" }}>
           No data
@@ -81,6 +72,6 @@ export function Top10({ title, data, wfull }: Props) {
           </tbody>
         </table>
       )}
-    </div>
+    </ChartCard>
   );
 }

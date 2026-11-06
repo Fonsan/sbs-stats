@@ -4,12 +4,14 @@ import {
 } from "recharts";
 import type { MonthlyDataPoint } from "@/types";
 import { useTheme } from "@/hooks/useTheme";
+import { ChartCard } from "@/components/ChartCard";
 import { FONTS } from "@/theme";
 
 interface Props {
   title: string;
   data: MonthlyDataPoint[];
   wfull: boolean;
+  exportContext?: string; // shown in the PNG export only
 }
 
 const MonthlyTooltip = ({
@@ -46,7 +48,7 @@ const MonthlyTooltip = ({
   );
 };
 
-export function MonthlyBarChart({ title, data, wfull }: Props) {
+export function MonthlyBarChart({ title, data, wfull, exportContext }: Props) {
   const { theme: t } = useTheme();
   const lastIdx = data.length - 1;
 
@@ -54,18 +56,7 @@ export function MonthlyBarChart({ title, data, wfull }: Props) {
   const projectedFill = t.accent + "55";
 
   return (
-    <div style={{
-      background: t.surface,
-      border: `1px solid ${t.surfaceBorder}`,
-      borderRadius: 8,
-      padding: "18px 16px 12px",
-      gridColumn: wfull ? "1 / -1" : undefined,
-      animation: "fadeIn 0.3s ease both",
-      boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
-    }}>
-      <div style={{ fontFamily: FONTS.display, fontWeight: 700, fontSize: 12, color: t.textMuted, letterSpacing: "0.07em", textTransform: "uppercase", marginBottom: 14 }}>
-        {title}
-      </div>
+    <ChartCard title={title} wfull={wfull} titleGap={14} exportContext={exportContext}>
       <ResponsiveContainer width="100%" height={220}>
         <BarChart data={data} margin={{ top: 8, right: 8, left: -10, bottom: 0 }}>
           <CartesianGrid strokeDasharray="2 4" stroke={t.chartGrid} />
@@ -88,6 +79,6 @@ export function MonthlyBarChart({ title, data, wfull }: Props) {
           </Bar>
         </BarChart>
       </ResponsiveContainer>
-    </div>
+    </ChartCard>
   );
 }

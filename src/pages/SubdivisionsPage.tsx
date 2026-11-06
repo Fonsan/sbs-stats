@@ -119,6 +119,11 @@ export function SubdivisionsPage({ refreshKey }: SubdivisionsPageProps) {
 
   const showContent = (loadState === "ready" || hasData) && subdivisions.length > 0;
 
+  // Prefixed to chart titles in PNG exports, since the image loses the page's selection
+  const exportContext = isRanking
+    ? `Ranking · ${period === ALL_TIME ? "All time" : (period ?? "").replace("-", "/")}`
+    : selected ? formatSubdivision(selected) : undefined;
+
   return (
     <div>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28, flexWrap: "wrap", gap: 12 }}>
@@ -172,6 +177,7 @@ export function SubdivisionsPage({ refreshKey }: SubdivisionsPageProps) {
                 title={m.label}
                 data={makeRanking(m.key)}
                 wfull={m.wfull ?? false}
+                exportContext={exportContext}
               />
             ) : (
               <Fragment key={m.key}>
@@ -179,6 +185,7 @@ export function SubdivisionsPage({ refreshKey }: SubdivisionsPageProps) {
                   title={m.label}
                   data={makeDataset(m.key).reverse()}
                   wfull={m.wfull ?? false}
+                  exportContext={exportContext}
                 />
                 {m.key === "total_personnel_casualties" && (
                   <RatioBarChart
@@ -187,6 +194,7 @@ export function SubdivisionsPage({ refreshKey }: SubdivisionsPageProps) {
                     tickFormatter={(v: string) => v.slice(0, 7).replace("-", "/")}
                     labelFormatter={(v: string) => v.slice(0, 7).replace("-", "/")}
                     wfull
+                    exportContext={exportContext}
                   />
                 )}
               </Fragment>

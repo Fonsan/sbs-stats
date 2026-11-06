@@ -38,7 +38,7 @@ export function DailyLineChart({ title, data, globalMax, globalMedian, wfull }: 
       </div>
       <div style={{ display: "flex", gap: 16, marginBottom: 10, fontFamily: FONTS.mono, fontSize: 11 }}>
         <span style={{ color: t.accent }}>▲ MAX {max.toLocaleString()}</span>
-        <span style={{ color: t.muted }}>~ MED {median.toLocaleString()}</span>
+        <span style={{ color: t.text }}>~ MEDIAN {median.toLocaleString()}</span>
       </div>
       <ResponsiveContainer width="100%" height={220}>
         <LineChart data={data} margin={{ top: 8, right: 8, left: -10, bottom: 0 }}>
@@ -55,10 +55,8 @@ export function DailyLineChart({ title, data, globalMax, globalMedian, wfull }: 
             itemStyle={{ color: t.primary }}
             labelFormatter={(v: string) => { const [y, m, d] = v.split('-'); return `${d}.${m}.${y}`; }}
           />
-          <ReferenceLine y={max} stroke={t.accent} strokeDasharray="4 4" strokeOpacity={0.6}
-            label={{ value: "MAX", position: "insideTopRight", fontSize: 9, fill: t.accent, fontFamily: FONTS.mono }} />
-          <ReferenceLine y={median} stroke={t.muted} strokeDasharray="4 4" strokeOpacity={0.5}
-            label={{ value: "MED", position: "insideTopRight", fontSize: 9, fill: t.muted, fontFamily: FONTS.mono }} />
+          <ReferenceLine y={max} stroke={t.accent} strokeDasharray="4 4" strokeOpacity={0.6} />
+          <ReferenceLine y={median} stroke={t.text} strokeDasharray="4 4" strokeOpacity={0.7} />
           <Line type="monotone" dataKey="value" name={title} stroke={t.primary} strokeWidth={2}
             dot={(props) => <CustomDot {...props} accentColor={t.accent} primaryColor={t.primary} bgColor={t.surface} />}
             activeDot={{ r: 5, fill: t.primary }}
