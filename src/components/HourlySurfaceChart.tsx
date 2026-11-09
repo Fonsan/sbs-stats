@@ -71,10 +71,12 @@ export default function HourlySurfaceChart({ data, metrics, metricKey, onMetricC
         x: POSITIONS,
         y: rows.map(daysAgo),
         z: rows.map(filledRow),
-        customdata: rows.map((s) => POSITIONS.map(() => s.date.split("-").reverse().join("."))) as unknown as Plotly.Datum[],
+        // Date for the hover label. gl3d surfaces ignore customdata in hovertemplate (shows "-"),
+        // and index text transposed relative to z: text[x][y], not text[y][x]
+        text: POSITIONS.map(() => rows.map((s) => s.date.split("-").reverse().join("."))) as unknown as string[],
         colorscale: [[0, t.chartGrid], [1, t.primary]],
         showscale: false,
-        hovertemplate: "%{customdata} · until %{x}:00<br><b>%{z:,}</b><extra></extra>",
+        hovertemplate: "%{text} · until %{x}:00<br><b>%{z:,}</b><extra></extra>",
       },
     ];
     if (today) {
