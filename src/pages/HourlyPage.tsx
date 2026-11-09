@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, lazy, Suspense } from "react";
 import { useDatabaseContext } from "@/context/useDatabaseContext";
 import { useTheme } from "@/hooks/useTheme";
 import { HourlyLineChart } from "@/components/HourlyLineChart";
+import { HourlyRidgelineChart } from "@/components/HourlyRidgelineChart";
 import { ChartGrid, LoadingScreen, ErrorScreen } from "@/components/Layout";
 import { buildMetrics } from "@/utils/metrics";
 import type { DailyRow, DailyDaySeries, GlobalStats, StatKey, Metric } from "@/types";
@@ -51,6 +52,8 @@ export function HourlyPage({ refreshKey }: HourlyPageProps) {
   const [surfaceKey, setSurfaceKey] = useState<StatKey>("total_personnel_casualties");
   // Memoized so the 3D chart only redraws when its data actually changes
   const surfaceData = useMemo(() => makeDataset(rows, surfaceKey), [rows, surfaceKey]);
+  const [ridgeKey, setRidgeKey] = useState<StatKey>("total_personnel_casualties");
+  const ridgeData = useMemo(() => makeDataset(rows, ridgeKey), [rows, ridgeKey]);
 
   return (
     <div>
@@ -90,6 +93,12 @@ export function HourlyPage({ refreshKey }: HourlyPageProps) {
               onMetricChange={setSurfaceKey}
             />
           </Suspense>
+          <HourlyRidgelineChart
+            data={ridgeData}
+            metrics={metrics}
+            metricKey={ridgeKey}
+            onMetricChange={setRidgeKey}
+          />
           {metrics.map((m: Metric) => (
             <HourlyLineChart
               key={m.key}
