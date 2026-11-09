@@ -3,6 +3,8 @@ import Plotly from "plotly.js-gl3d-dist-min";
 import type { DailyDaySeries, Metric, StatKey } from "@/types";
 import { useTheme } from "@/hooks/useTheme";
 import { ChartCard } from "@/components/ChartCard";
+import { MetricSelect } from "@/components/MetricSelect";
+import { POSITIONS, zRow, filledRow } from "@/utils/hourly";
 import { FONTS } from "@/theme";
 
 interface Props {
@@ -12,27 +14,11 @@ interface Props {
   onMetricChange: (key: StatKey) => void;
 }
 
-// Same x mapping as HourlyLineChart: position 0 is the day-start anchor (always 0),
-// DB hour N is drawn at position N+1 (the running total at the end of that hour)
-const POSITIONS = Array.from({ length: 25 }, (_, i) => i);
-
 // The y axis is "days before the newest day" (0 = newest, nearest to the camera). A reversed
 // date axis would be simpler, but gl3d flips only the labels there, not the surface rows.
 const DAY_MS = 86_400_000;
 const dayNumber = (date: string) => Date.parse(`${date}T00:00:00Z`) / DAY_MS;
 const MAX_DATE_TICKS = 6;
-
-function zRow(series: DailyDaySeries): (number | null)[] {
-  const byHour = new Map(series.points.map((p) => [p.hour, p.value]));
-  return POSITIONS.map((pos) => (pos === 0 ? 0 : byHour.get(pos - 1) ?? null));
-}
-
-// Past days: carry the running total over missing hours (like connectNulls in the 2D chart);
-// null cells would punch holes in the surface
-function filledRow(series: DailyDaySeries): number[] {
-  let last = 0;
-  return zRow(series).map((v) => (last = v ?? last));
-}
 
 // One WebGL surface: x = hour, y = date, z = cumulative value through the day.
 // Loaded lazily by HourlyPage so the plotly bundle doesn't delay the 2D charts.
@@ -139,19 +125,7 @@ export default function HourlySurfaceChart({ data, metrics, metricKey, onMetricC
   return (
     <ChartCard title={`${label} — 3D`} wfull beforeExport={swapInSnapshot}>
       <div style={{ display: "flex", gap: 16, marginBottom: 10, fontFamily: FONTS.mono, fontSize: 10, alignItems: "center", flexWrap: "wrap" }}>
-        <select
-          value={metricKey}
-          onChange={(e) => onMetricChange(e.target.value as StatKey)}
-          aria-label="Metric for the 3D chart"
-          style={{
-            background: t.bgAlt, color: t.text,
-            border: `1px solid ${t.border}`, borderRadius: 4,
-            padding: "4px 8px", fontFamily: FONTS.mono, fontSize: 11,
-            maxWidth: "100%",
-          }}
-        >
-          {metrics.map((m) => <option key={m.key} value={m.key}>{m.label}</option>)}
-        </select>
+        <MetricSelect metrics={metrics} value={metricKey} onChange={onMetricChange} ariaLabel="Metric for the 3D chart" />
         <span style={{ color: t.accent, fontWeight: 700 }}>— TODAY</span>
         <span style={{ color: t.textMuted }}>{past.length} previous day{past.length !== 1 ? "s" : ""}</span>
         <span style={{ color: t.textFaint }}>drag to rotate · scroll to zoom</span>
