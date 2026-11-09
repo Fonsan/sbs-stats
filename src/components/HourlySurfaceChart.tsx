@@ -20,7 +20,6 @@ const POSITIONS = Array.from({ length: 25 }, (_, i) => i);
 // date axis would be simpler, but gl3d flips only the labels there, not the surface rows.
 const DAY_MS = 86_400_000;
 const dayNumber = (date: string) => Date.parse(`${date}T00:00:00Z`) / DAY_MS;
-const ddmm = (date: string) => { const [, m, d] = date.split("-"); return `${d}.${m}.`; };
 const MAX_DATE_TICKS = 6;
 
 function zRow(series: DailyDaySeries): (number | null)[] {
@@ -73,7 +72,7 @@ export default function HourlySurfaceChart({ data, metrics, metricKey, onMetricC
         z: rows.map(filledRow),
         // Date for the hover label. gl3d surfaces ignore customdata in hovertemplate (shows "-"),
         // and index text transposed relative to z: text[x][y], not text[y][x]
-        text: POSITIONS.map(() => rows.map((s) => s.date.split("-").reverse().join("."))) as unknown as string[],
+        text: POSITIONS.map(() => rows.map((s) => s.date)) as unknown as string[],
         colorscale: [[0, t.chartGrid], [1, t.primary]],
         showscale: false,
         hovertemplate: "%{text} · until %{x}:00<br><b>%{z:,}</b><extra></extra>",
@@ -105,7 +104,7 @@ export default function HourlySurfaceChart({ data, metrics, metricKey, onMetricC
         xaxis: { ...axis, title: { text: "hour (Kyiv)" }, range: [0, 24], dtick: 3 },
         yaxis: {
           ...axis, title: { text: "" },
-          tickmode: "array", tickvals: ticks.map(daysAgo), ticktext: ticks.map((s) => ddmm(s.date)),
+          tickmode: "array", tickvals: ticks.map(daysAgo), ticktext: ticks.map((s) => s.date),
         },
         zaxis: { ...axis, title: { text: "" }, rangemode: "tozero" },
         aspectmode: "manual",
