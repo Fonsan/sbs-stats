@@ -16,6 +16,13 @@ interface Props {
 // DB hour N is drawn at position N+1 (the running total at the end of that hour)
 const POSITIONS = Array.from({ length: 25 }, (_, i) => i);
 
+// The y axis is "days before the newest day" (0 = newest, nearest to the camera). A reversed
+// date axis would be simpler, but gl3d flips only the labels there, not the surface rows.
+const DAY_MS = 86_400_000;
+const dayNumber = (date: string) => Date.parse(`${date}T00:00:00Z`) / DAY_MS;
+const ddmm = (date: string) => { const [, m, d] = date.split("-"); return `${d}.${m}.`; };
+const MAX_DATE_TICKS = 6;
+
 function zRow(series: DailyDaySeries): (number | null)[] {
   const byHour = new Map(series.points.map((p) => [p.hour, p.value]));
   return POSITIONS.map((pos) => (pos === 0 ? 0 : byHour.get(pos - 1) ?? null));
@@ -50,16 +57,24 @@ export default function HourlySurfaceChart({ data, metrics, metricKey, onMetricC
       showbackground: false,
       tickfont: { size: 10 },
     };
+    // data is sorted oldest → newest (today last); flip so y ascends from the newest day
+    const newestFirst = [...data].reverse();
+    const ref = newestFirst.length ? dayNumber(newestFirst[0].date) : 0;
+    const daysAgo = (s: DailyDaySeries) => ref - dayNumber(s.date);
+    const tickStep = Math.max(1, Math.ceil(newestFirst.length / MAX_DATE_TICKS));
+    const ticks = newestFirst.filter((_, i) => i % tickStep === 0);
+    // Today is drawn only as the red line: its future hours are unknown, not zero
+    const rows = newestFirst.filter((s) => !s.is_today);
     const traces: Plotly.Data[] = [
       {
         type: "surface",
         x: POSITIONS,
-        // Today is drawn only as the red line: its future hours are unknown, not zero
-        y: past.map((s) => s.date),
-        z: past.map(filledRow),
+        y: rows.map(daysAgo),
+        z: rows.map(filledRow),
+        customdata: rows.map((s) => POSITIONS.map(() => s.date.split("-").reverse().join("."))) as unknown as Plotly.Datum[],
         colorscale: [[0, t.chartGrid], [1, t.primary]],
         showscale: false,
-        hovertemplate: "%{y|%d.%m.%Y} · until %{x}:00<br><b>%{z:,}</b><extra></extra>",
+        hovertemplate: "%{customdata} · until %{x}:00<br><b>%{z:,}</b><extra></extra>",
       },
     ];
     if (today) {
@@ -69,7 +84,7 @@ export default function HourlySurfaceChart({ data, metrics, metricKey, onMetricC
         type: "scatter3d",
         mode: "lines",
         x: pts,
-        y: pts.map(() => today.date),
+        y: pts.map(() => daysAgo(today)),
         z: pts.map((pos) => row[pos]),
         line: { color: t.accent, width: 6 },
         hovertemplate: "TODAY · until %{x}:00<br><b>%{z:,}</b><extra></extra>",
@@ -86,8 +101,10 @@ export default function HourlySurfaceChart({ data, metrics, metricKey, onMetricC
       hoverlabel: { bgcolor: t.surface, bordercolor: t.border, font: { family: FONTS.mono, color: t.text } },
       scene: {
         xaxis: { ...axis, title: { text: "hour (Kyiv)" }, range: [0, 24], dtick: 3 },
-        // Reversed so the newest day (today) sits on the near edge with hours running left → right
-        yaxis: { ...axis, title: { text: "" }, autorange: "reversed", tickformat: "%d.%m." },
+        yaxis: {
+          ...axis, title: { text: "" },
+          tickmode: "array", tickvals: ticks.map(daysAgo), ticktext: ticks.map((s) => ddmm(s.date)),
+        },
         zaxis: { ...axis, title: { text: "" }, rangemode: "tozero" },
         aspectmode: "manual",
         aspectratio: { x: 1.5, y: 1.5, z: 0.8 },
@@ -96,7 +113,7 @@ export default function HourlySurfaceChart({ data, metrics, metricKey, onMetricC
       },
     };
     Plotly.react(el, traces, layout, { responsive: true, displaylogo: false });
-  }, [past, today, t]);
+  }, [data, today, t]);
 
   // html-to-image reads the WebGL canvas back blank, so export a plotly snapshot in its place
   const swapInSnapshot = async () => {
