@@ -8,7 +8,7 @@ import type { DailyDaySeries } from "@/types";
 import { useTheme } from "@/hooks/useTheme";
 import { ChartCard } from "@/components/ChartCard";
 import { todayCone } from "@/utils/hourly";
-import { kyivSunTimes, formatHour } from "@/utils/sun";
+import { kyivSunTimes } from "@/utils/sun";
 import type { Theme } from "@/theme";
 import { FONTS } from "@/theme";
 // Hour ticks at an even step that fits the chart width. Letting recharts drop overlapping
@@ -157,6 +157,16 @@ if (typeof document !== "undefined" && !document.getElementById(STYLE_ID)) {
   s.textContent = `.hourly-card { position: relative; z-index: 1; } .hourly-card:hover { z-index: 100; }`;
   document.head.appendChild(s);
 }
+// Small symbol above the plot area at a sunrise/sunset line; recharts passes the line's viewBox
+function SunMarker({ viewBox, symbol, color }: { viewBox?: { x: number; y: number }; symbol: string; color: string }) {
+  if (!viewBox) return null;
+  return (
+    <text x={viewBox.x} y={viewBox.y - 4} textAnchor="middle" fontSize={10} fontFamily={FONTS.mono} fill={color} fillOpacity={0.85}>
+      {symbol}
+    </text>
+  );
+}
+
 export function HourlyLineChart({ title, data, globalMax, globalMedian, wfull, exportContext }: Props) {
   const { theme: t } = useTheme();
   const chartData = withCone(pivotData(data), data);
@@ -185,14 +195,10 @@ export function HourlyLineChart({ title, data, globalMax, globalMedian, wfull, e
         <span style={{ color: t.textMuted }}>{total} previous day{total !== 1 ? "s" : ""}</span>
         <span style={{ color: t.accent }}>▲ MAX {globalMax.toLocaleString()}</span>
         <span style={{ color: t.text }}>~ MEDIAN {globalMedian.toLocaleString()}</span>
-        {sun && (
-          <span style={{ color: t.sun }} title="Sunrise–sunset in Kyiv today (dashed vertical lines)">
-            ☀ {formatHour(sun.sunrise)}–{formatHour(sun.sunset)}
-          </span>
-        )}
       </div>
       <ResponsiveContainer width="100%" height={220} onResize={(w) => setChartWidth(w)}>
-        <ComposedChart data={chartData} margin={{ top: 8, right: 8, left: -10, bottom: 0 }}>
+        {/* Extra top margin leaves room for the sunrise/sunset markers above the plot */}
+        <ComposedChart data={chartData} margin={{ top: sun ? 16 : 8, right: 8, left: -10, bottom: 0 }}>
           <CartesianGrid strokeDasharray="2 4" stroke={t.chartGrid} />
           <XAxis dataKey="hour"
             tick={{ fontSize: 10, fill: t.textMuted, fontFamily: FONTS.mono }}
@@ -238,8 +244,10 @@ export function HourlyLineChart({ title, data, globalMax, globalMedian, wfull, e
           <ReferenceLine y={globalMedian} stroke={t.text} strokeDasharray="4 4" strokeOpacity={0.7} />
           {sun && [
             // Muted on purpose: background context, not data
-            <ReferenceLine key="sunrise" x={sun.sunrise} stroke={t.sun} strokeDasharray="2 4" strokeOpacity={0.4} />,
-            <ReferenceLine key="sunset" x={sun.sunset} stroke={t.sun} strokeDasharray="2 4" strokeOpacity={0.4} />,
+            <ReferenceLine key="sunrise" x={sun.sunrise} stroke={t.sun} strokeDasharray="2 4" strokeOpacity={0.4}
+              label={<SunMarker symbol="☀↑" color={t.sun} />} />,
+            <ReferenceLine key="sunset" x={sun.sunset} stroke={t.sun} strokeDasharray="2 4" strokeOpacity={0.4}
+              label={<SunMarker symbol="☀↓" color={t.sun} />} />,
           ]}
         </ComposedChart>
       </ResponsiveContainer>
