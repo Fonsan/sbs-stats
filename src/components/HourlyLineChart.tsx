@@ -160,6 +160,9 @@ export function HourlyLineChart({ title, data, globalMax, globalMedian, wfull, e
   const { theme: t } = useTheme();
   const chartData = withCone(pivotData(data), data);
   const hasCone = chartData.some((r) => r[CONE_MED] != null);
+  // End-of-day estimate: the cone at hour 24
+  const endMed = chartData[24]?.[CONE_MED] as number | undefined;
+  const endRange = chartData[24]?.[CONE_OUTER] as [number, number] | undefined;
   const todaySeries = data.find((s) => s.is_today);
   const pastSeries = data.filter((s) => !s.is_today);
   const total = pastSeries.length;
@@ -170,7 +173,12 @@ export function HourlyLineChart({ title, data, globalMax, globalMedian, wfull, e
     <ChartCard title={title} wfull={wfull} className="hourly-card" exportContext={exportContext}>
       <div style={{ display: "flex", gap: 16, marginBottom: 10, fontFamily: FONTS.mono, fontSize: 10, alignItems: "center", flexWrap: "wrap" }}>
         <span style={{ color: t.accent, fontWeight: 700 }}>— TODAY</span>
-        {hasCone && <span style={{ color: t.accent }} title="Spread of where today ends up if it grows like each of the previous days from now on">▒ 10–90% FORECAST</span>}
+        {hasCone && endMed != null && endRange && (
+          <span style={{ color: t.accent }} title="Where today ends up if it grows like each of the previous days from now on: median, with the 10–90% range shaded">
+            ▒ END OF DAY <span style={{ color: t.text, fontWeight: 700 }}>~{Math.round(endMed).toLocaleString()}</span>
+            {" "}({Math.round(endRange[0]).toLocaleString()}–{Math.round(endRange[1]).toLocaleString()})
+          </span>
+        )}
         <span style={{ color: t.textMuted }}>{total} previous day{total !== 1 ? "s" : ""}</span>
         <span style={{ color: t.accent }}>▲ MAX {globalMax.toLocaleString()}</span>
         <span style={{ color: t.text }}>~ MEDIAN {globalMedian.toLocaleString()}</span>
