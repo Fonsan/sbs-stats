@@ -175,7 +175,7 @@ export function HourlyLineChart({ title, data, globalMax, globalMedian, wfull, e
         <span style={{ color: t.accent, fontWeight: 700 }}>— TODAY</span>
         {hasCone && endMed != null && endRange && (
           <span style={{ color: t.accent }} title="Where today ends up if it grows like each of the previous days from now on: median, with the 10–90% range shaded">
-            ▒ END OF DAY <span style={{ color: t.text, fontWeight: 700 }}>~{Math.round(endMed).toLocaleString()}</span>
+            ▒ END OF DAY <span style={{ color: t.text }}>~{Math.round(endMed).toLocaleString()}</span>
             {" "}({Math.round(endRange[0]).toLocaleString()}–{Math.round(endRange[1]).toLocaleString()})
           </span>
         )}
