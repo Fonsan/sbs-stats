@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   ComposedChart, Line, Area, XAxis, YAxis, CartesianGrid,
   Tooltip, ReferenceLine, ResponsiveContainer,
@@ -90,7 +90,8 @@ const CustomTooltip = ({
   const past = entries
     .filter((p) => p.dataKey !== todayDate)
     .sort((a, b) => b.dataKey.localeCompare(a.dataKey)); // newest → oldest
-  const ROWS_PER_COL = 12;
+  // Taller columns on narrow screens so 60 days fit in 4 columns instead of 5
+  const ROWS_PER_COL = typeof window !== "undefined" && window.innerWidth < 420 ? 15 : 12;
   const columns: typeof past[] = [];
   for (let i = 0; i < past.length; i += ROWS_PER_COL) {
     columns.push(past.slice(i, i + ROWS_PER_COL));
@@ -178,6 +179,30 @@ export function HourlyLineChart({ title, data, globalMax, globalMedian, wfull, e
   const pastSeries = data.filter((s) => !s.is_today);
   const total = pastSeries.length;
   const [chartWidth, setChartWidth] = useState(600);
+  // The tooltip is often wider than half the chart, so it isn't confined to the chart: it opens on
+  // whichever side of the cursor has room on screen. Only when neither side fits (phones) does it
+  // fall back to staying inside the chart; on touch screens there is no cursor to cover anyway.
+  const plotRef = useRef<HTMLDivElement>(null);
+  const [tooltipSide, setTooltipSide] = useState<"right" | "left" | "inside">("right");
+  // In the "inside" fallback the tooltip is centred on the screen (it can be wider than the chart)
+  const [insideX, setInsideX] = useState<number | undefined>(undefined);
+  // Recharts anchors the tooltip to the nearest hour point, which can be half an hour-step away from
+  // the mouse, so the gap must exceed half a step for the tooltip to stay clear of the cursor
+  const halfStep = (chartWidth - Y_AXIS_SPACE) / 24 / 2;
+  const tooltipOffset = Math.round(halfStep) + 8;
+  const pickTooltipSide = (clientX: number) => {
+    const tip = plotRef.current?.querySelector<HTMLElement>(".recharts-tooltip-wrapper")?.offsetWidth ?? 0;
+    if (!tip) return;                     // nothing measured yet; keep the current side
+    const reach = tooltipOffset + halfStep + tip;
+    const side = clientX + reach <= window.innerWidth - 8 ? "right"
+      : clientX - reach >= 8 ? "left"
+      : "inside";
+    setTooltipSide(side);                 // same value → React skips the re-render
+    if (side === "inside") {
+      const chartLeft = plotRef.current!.getBoundingClientRect().left;
+      setInsideX(Math.round(Math.max(8, (window.innerWidth - tip) / 2) - chartLeft));
+    }
+  };
   // Today's sunrise/sunset in Kyiv; x position h = h:00 Kyiv time, so decimal hours plot directly
   const sun = useMemo(() => kyivSunTimes(), []);
   const getOpacity = (index: number) =>
@@ -196,9 +221,11 @@ export function HourlyLineChart({ title, data, globalMax, globalMedian, wfull, e
         <span style={{ color: t.accent }}>▲ MAX {globalMax.toLocaleString()}</span>
         <span style={{ color: t.text }}>~ MEDIAN {globalMedian.toLocaleString()}</span>
       </div>
+      <div ref={plotRef}>
       <ResponsiveContainer width="100%" height={220} onResize={(w) => setChartWidth(w)}>
         {/* Extra top margin leaves room for the sunrise/sunset markers above the plot */}
-        <ComposedChart data={chartData} margin={{ top: sun ? 16 : 8, right: 8, left: -10, bottom: 0 }}>
+        <ComposedChart data={chartData} margin={{ top: sun ? 16 : 8, right: 8, left: -10, bottom: 0 }}
+          onMouseMove={(_, e) => pickTooltipSide((e as unknown as MouseEvent).clientX)}>
           <CartesianGrid strokeDasharray="2 4" stroke={t.chartGrid} />
           <XAxis dataKey="hour"
             tick={{ fontSize: 10, fill: t.textMuted, fontFamily: FONTS.mono }}
@@ -212,8 +239,10 @@ export function HourlyLineChart({ title, data, globalMax, globalMedian, wfull, e
           <YAxis tick={{ fontSize: 10, fill: t.textMuted, fontFamily: FONTS.mono }} tickLine={false} axisLine={false} domain={[0, (dataMax: number) => Math.max(dataMax, globalMax)]} />
           <Tooltip
             content={(props) => <CustomTooltip {...props} todayDate={todaySeries?.date} t={t} />}
-            // Keep the tooltip inside the chart so it flips sides instead of leaving the screen
-            allowEscapeViewBox={{ x: false, y: false }}
+            allowEscapeViewBox={{ x: tooltipSide !== "inside", y: false }}
+            reverseDirection={{ x: tooltipSide === "left", y: false }}
+            offset={tooltipSide === "inside" ? 10 : tooltipOffset}
+            position={tooltipSide === "inside" ? { x: insideX } : undefined}
             wrapperStyle={{ zIndex: 9999 }}
           />
           {/* Cone first so the day lines draw over it */}
@@ -251,6 +280,7 @@ export function HourlyLineChart({ title, data, globalMax, globalMedian, wfull, e
           ]}
         </ComposedChart>
       </ResponsiveContainer>
+      </div>
     </ChartCard>
   );
 }
