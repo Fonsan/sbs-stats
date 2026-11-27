@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   ComposedChart, Line, Area, XAxis, YAxis, CartesianGrid,
   Tooltip, ReferenceLine, ResponsiveContainer,
@@ -8,6 +8,7 @@ import type { DailyDaySeries } from "@/types";
 import { useTheme } from "@/hooks/useTheme";
 import { ChartCard } from "@/components/ChartCard";
 import { todayCone } from "@/utils/hourly";
+import { kyivSunTimes, formatHour } from "@/utils/sun";
 import type { Theme } from "@/theme";
 import { FONTS } from "@/theme";
 // Hour ticks at an even step that fits the chart width. Letting recharts drop overlapping
@@ -167,6 +168,8 @@ export function HourlyLineChart({ title, data, globalMax, globalMedian, wfull, e
   const pastSeries = data.filter((s) => !s.is_today);
   const total = pastSeries.length;
   const [chartWidth, setChartWidth] = useState(600);
+  // Today's sunrise/sunset in Kyiv; x position h = h:00 Kyiv time, so decimal hours plot directly
+  const sun = useMemo(() => kyivSunTimes(), []);
   const getOpacity = (index: number) =>
     total <= 1 ? 0.18 : 0.07 + (index / (total - 1)) * 0.35;
   return (
@@ -182,6 +185,11 @@ export function HourlyLineChart({ title, data, globalMax, globalMedian, wfull, e
         <span style={{ color: t.textMuted }}>{total} previous day{total !== 1 ? "s" : ""}</span>
         <span style={{ color: t.accent }}>▲ MAX {globalMax.toLocaleString()}</span>
         <span style={{ color: t.text }}>~ MEDIAN {globalMedian.toLocaleString()}</span>
+        {sun && (
+          <span style={{ color: t.sun }} title="Sunrise–sunset in Kyiv today (dashed vertical lines)">
+            ☀ {formatHour(sun.sunrise)}–{formatHour(sun.sunset)}
+          </span>
+        )}
       </div>
       <ResponsiveContainer width="100%" height={220} onResize={(w) => setChartWidth(w)}>
         <ComposedChart data={chartData} margin={{ top: 8, right: 8, left: -10, bottom: 0 }}>
@@ -228,6 +236,11 @@ export function HourlyLineChart({ title, data, globalMax, globalMedian, wfull, e
           {/* Reference lines after the data lines so they're drawn on top */}
           <ReferenceLine y={globalMax} stroke={t.accent} strokeDasharray="4 4" strokeOpacity={0.6} />
           <ReferenceLine y={globalMedian} stroke={t.text} strokeDasharray="4 4" strokeOpacity={0.7} />
+          {sun && [
+            // Muted on purpose: background context, not data
+            <ReferenceLine key="sunrise" x={sun.sunrise} stroke={t.sun} strokeDasharray="2 4" strokeOpacity={0.4} />,
+            <ReferenceLine key="sunset" x={sun.sunset} stroke={t.sun} strokeDasharray="2 4" strokeOpacity={0.4} />,
+          ]}
         </ComposedChart>
       </ResponsiveContainer>
     </ChartCard>

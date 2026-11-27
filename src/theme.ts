@@ -23,6 +23,7 @@ export interface Theme {
   chartGrid: string;
   bgImportant: string;
   textImportant: string;
+  sun: string;          // sunrise/sunset lines on the hourly charts
 }
 
 export const LIGHT: Theme = {
@@ -41,6 +42,7 @@ export const LIGHT: Theme = {
   chartGrid:    "#dde1e7",
   bgImportant:  "#e3170a",
   textImportant:  "#ffffff",
+  sun:          "#b45309",   // amber — distinct from the red today/MAX lines
 };
 
 export const DARK: Theme = {
@@ -58,7 +60,8 @@ export const DARK: Theme = {
   headerBg:     "rgba(6,9,16,0.85)",
   chartGrid:    "#202c45",
   bgImportant:  "#ff5f1f",
-  textImportant:  "#ffffff",  
+  textImportant:  "#ffffff",
+  sun:          "#f5c518",   // yellow — distinct from the orange today/MAX lines
 };
 
 export const GLOBAL_CSS = (t: Theme) => `
