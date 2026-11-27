@@ -30,3 +30,37 @@ export function hourlyIncrements(series: DailyDaySeries): (number | null)[] {
     return inc;
   });
 }
+
+export interface ConePoint { pos: number; p10: number; p25: number; p50: number; p75: number; p90: number }
+
+// Linear-interpolated quantile of an ascending array
+function quantile(sorted: number[], q: number): number {
+  const i = (sorted.length - 1) * q;
+  const lo = Math.floor(i);
+  return sorted[lo] + (sorted[Math.ceil(i)] - sorted[lo]) * (i - lo);
+}
+
+const MIN_CONE_DAYS = 3;
+
+// Where today is likely to end up: each past day's growth after today's last known hour,
+// added to today's current total (additive, since ratios explode early in the day when
+// values are near 0). Positions follow POSITIONS; null when there is nothing to project.
+export function todayCone(series: DailyDaySeries[]): { from: number; points: ConePoint[] } | null {
+  const today = series.find((s) => s.is_today);
+  const past = series.filter((s) => !s.is_today);
+  if (!today || past.length < MIN_CONE_DAYS) return null;
+  const row = zRow(today);
+  const from = row.reduce<number>((acc, v, pos) => (v != null ? pos : acc), 0);
+  if (from >= POSITIONS.length - 1) return null;
+  const now = row[from] ?? 0;
+  const pastRows = past.map(filledRow);
+  const points = POSITIONS.slice(from).map((pos) => {
+    const outcomes = pastRows.map((r) => now + Math.max(0, r[pos] - r[from])).sort((a, b) => a - b);
+    return {
+      pos,
+      p10: quantile(outcomes, 0.1), p25: quantile(outcomes, 0.25), p50: quantile(outcomes, 0.5),
+      p75: quantile(outcomes, 0.75), p90: quantile(outcomes, 0.9),
+    };
+  });
+  return { from, points };
+}
