@@ -1,4 +1,19 @@
-import type { DailyDaySeries } from "@/types";
+import type { DailyDaySeries, DailyRow, StatKey } from "@/types";
+
+// Groups hourly DB rows into one series per day for one metric; past days oldest first, today last
+export function toDaySeries(rows: DailyRow[], key: StatKey): DailyDaySeries[] {
+  const map = new Map<string, DailyDaySeries>();
+  for (const row of rows) {
+    if (!map.has(row.date)) map.set(row.date, { date: row.date, is_today: row.is_today, points: [] });
+    map.get(row.date)!.points.push({ hour: row.hour, value: (row[key] as number) ?? 0 });
+  }
+  for (const s of map.values()) s.points.sort((a, b) => a.hour - b.hour);
+  return Array.from(map.values()).sort((a, b) => {
+    if (a.is_today) return 1;
+    if (b.is_today) return -1;
+    return a.date.localeCompare(b.date);
+  });
+}
 
 // Same x mapping as HourlyLineChart: position 0 is the day-start anchor (always 0),
 // DB hour N is drawn at position N+1 (the running total at the end of that hour)

@@ -9,7 +9,7 @@ interface Props {
   ariaLabel: string;
 }
 
-// Metric picker for the single-metric charts on the Hourly page (3D, ridgeline)
+// Metric picker for the single-metric charts on the 3D Charts page (3D surface, ridgeline)
 export function MetricSelect({ metrics, value, onChange, ariaLabel }: Props) {
   const { theme: t } = useTheme();
   return (
