@@ -4,7 +4,8 @@ import { useTheme } from "@/hooks/useTheme";
 import { HourlyLineChart } from "@/components/HourlyLineChart";
 import { ChartGrid, LoadingScreen, ErrorScreen } from "@/components/Layout";
 import { buildMetrics } from "@/utils/metrics";
-import type { DailyRow, DailyDaySeries, GlobalStats, StatKey, Metric } from "@/types";
+import { toDaySeries } from "@/utils/hourly";
+import type { DailyRow, GlobalStats, Metric } from "@/types";
 import { FONTS } from "@/theme";
 
 const DAY_OPTIONS = [7, 14, 30, 60] as const;
@@ -31,20 +32,6 @@ export function HourlyPage({ refreshKey }: HourlyPageProps) {
   }, [loadState, days, queryHourly, refreshKey]);
 
   const metrics = useMemo<Metric[]>(() => buildMetrics(), []);
-
-  const makeDataset = (key: StatKey): DailyDaySeries[] => {
-    const map = new Map<string, DailyDaySeries>();
-    for (const row of rows) {
-      if (!map.has(row.date)) map.set(row.date, { date: row.date, is_today: row.is_today, points: [] });
-      map.get(row.date)!.points.push({ hour: row.hour, value: (row[key] as number) ?? 0 });
-    }
-    for (const s of map.values()) s.points.sort((a, b) => a.hour - b.hour);
-    return Array.from(map.values()).sort((a, b) => {
-      if (a.is_today) return 1;
-      if (b.is_today) return -1;
-      return a.date.localeCompare(b.date);
-    });
-  };
 
   return (
     <div>
@@ -80,7 +67,7 @@ export function HourlyPage({ refreshKey }: HourlyPageProps) {
             <HourlyLineChart
               key={m.key}
               title={m.label}
-              data={makeDataset(m.key)}
+              data={toDaySeries(rows, m.key)}
               globalMax={globalStats[m.key]?.max ?? 0}
               globalMedian={globalStats[m.key]?.median ?? 0}
               wfull={m.wfull ?? false}

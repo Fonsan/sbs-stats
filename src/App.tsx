@@ -7,6 +7,7 @@ import { HourlyPage } from "@/pages/HourlyPage";
 import { MonthlyPage } from "@/pages/MonthlyPage";
 import { SubdivisionsPage } from "@/pages/SubdivisionsPage";
 import { Top10Page } from "@/pages/Top10Page";
+import { Charts3DPage } from "@/pages/Charts3DPage";
 import { REFRESH_INTERVAL_MS } from "@/hooks/useDatabase";
 import type { Page } from "@/types";
 import { FONTS, GLOBAL_CSS } from "@/theme";
@@ -278,6 +279,7 @@ function AppInner() {
             {navBtn("monthly", "MONTHLY")}
             {navBtn("subdivisions", "SUBDIVISIONS")}
             {navBtn("top10", "RECORDS")}
+            {navBtn("charts3d", "3D CHARTS")}
           </nav>
 
           {/* Refresh indicator + theme toggle */}
@@ -318,6 +320,7 @@ function AppInner() {
           {page === "monthly" && <MonthlyPage refreshKey={refreshCount} />}
           {page === "subdivisions" && <SubdivisionsPage refreshKey={refreshCount} />}
           {page === "top10"   && <Top10Page refreshKey={refreshCount} />}
+          {page === "charts3d" && <Charts3DPage refreshKey={refreshCount} />}
         </main>
         <ScrollTopButton />
       </div>
